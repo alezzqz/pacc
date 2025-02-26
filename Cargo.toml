@@ -1,0 +1,7 @@
+[package]
+name = "pacc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libpulse-binding = "2.28.2"
