@@ -8,7 +8,7 @@ use tui::{
     backend::CrosstermBackend, style::{Color, Style}, text::{Span, Spans}, widgets::{Block, Borders, List, ListItem, ListState}, Terminal
 };
 
-use crate::source::PaSource;
+use crate::source::PaOutput;
 
 pub struct UiContext {
     terminal: Terminal<CrosstermBackend<Stdout>>
@@ -38,13 +38,13 @@ impl Drop for UiContext {
     }
 }
 
-pub fn show_ui(mut list_state: &mut ListState, elems: &Vec<PaSource>) -> io::Result<()> {
+pub fn show_ui(mut list_state: &mut ListState, list_elems: &Vec<PaOutput>) -> io::Result<()> {
     let mut ui_context = UiContext::new().unwrap();
 
     loop {
         ui_context.terminal.draw(|f| {
             let mut items: Vec<ListItem> = Vec::new();
-            for e in elems {
+            for e in list_elems {
                 items.push(ListItem::new(
                     Spans::from(vec![
                         Span::styled(e.to_list_line(), Style::default().fg(Color::Yellow))
@@ -68,14 +68,14 @@ pub fn show_ui(mut list_state: &mut ListState, elems: &Vec<PaSource>) -> io::Res
                 }
                 KeyCode::Down => {
                     if let Some(selected) = list_state.selected() {
-                        let next = (selected + 1) % elems.len();
+                        let next = (selected + 1) % list_elems.len();
                         list_state.select(Some(next));
                     }
                 }
                 KeyCode::Up => {
                     if let Some(selected) = list_state.selected() {
                         let prev = if selected == 0 {
-                            elems.len() - 1
+                            list_elems.len() - 1
                         } else {
                             selected - 1
                         };

@@ -4,38 +4,30 @@ pub mod pulse;
 
 use std::{env, sync::{Arc, Mutex}};
 
-use libpulse_binding::context::Context;
-use libpulse_binding::mainloop::standard::Mainloop;
-use pulse::{connect_context, get_pa_outputs_list, set_pa_sink_and_port};
+use pulse::PaContext;
 use tui::widgets::ListState;
 
 fn main() {
     if env::args().find(|x| x == "--version") != None {
-        println!("paccu version 1.1");
+        println!("paccu version 0.2.1");
         return;
     }
 
-    let mut mainloop = Mainloop::new().expect("Failed to create mainloop");
-    let mut context = Context::new(&mainloop, "Audio Output Switcher").expect("Failed to create context");
-
-    if let Err(e) = connect_context(&mut mainloop, &mut context) {
-        eprintln!("{}", e);
+    let mut pulse_ctx = PaContext::new();
+    if let Err(e) = pulse_ctx.connect_context() {
+        eprintln!("{e}");
         return;
     }
 
-    let sources = Arc::new(Mutex::new(Vec::new()));
-
-    let introspect = context.introspect();
-
-    if let Err(e) = get_pa_outputs_list(&mut mainloop, &introspect, sources.clone()) {
-        eprintln!("{}", e);
+    let outputs = Arc::new(Mutex::new(Vec::new()));
+    if let Err(e) = pulse_ctx.get_pa_outputs_list(outputs.clone()) {
+        eprintln!("{e}");
         return;
     }
 
     let mut state = ListState::default();
     state.select(Some(0));
-
-    if let Err(e) = ui::show_ui(&mut state, &sources.lock().unwrap()) {
+    if let Err(e) = ui::show_ui(&mut state, &outputs.lock().unwrap()) {
         eprintln!("{e}");
         return;
     };
@@ -44,12 +36,11 @@ fn main() {
         return;
     }
 
-    let choosen_src = &sources.lock().unwrap()[state.selected().unwrap()];
-
-    if let Err(e) = set_pa_sink_and_port(&mut mainloop, &mut context, &choosen_src) {
-        eprintln!("{}", e);
+    let selected_out = &outputs.lock().unwrap()[state.selected().unwrap()];
+    if let Err(e) = pulse_ctx.set_pa_sink_and_port(&selected_out) {
+        eprintln!("{e}");
         return;
     }
 
-    println!("Output switched to '{}'", choosen_src.to_list_line());
+    println!("Output switched to '{}'", selected_out.to_list_line());
 }

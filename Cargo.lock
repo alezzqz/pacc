@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "pacc"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "crossterm 0.28.1",
  "libpulse-binding",
