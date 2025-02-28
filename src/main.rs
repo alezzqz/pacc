@@ -7,40 +7,37 @@ use std::{env, sync::{Arc, Mutex}};
 use pulse::PaContext;
 use tui::widgets::ListState;
 
+macro_rules! check_res {
+    ($x:expr) => {
+        if let Err(e) = $x {
+            eprintln!("{e}");
+            return;
+        }
+    };
+}
+
 fn main() {
-    if env::args().find(|x| x == "--version") != None {
-        println!("paccu version 0.2.1");
+    if env::args().find(|x| x == "--version" || x == "-v") != None {
+        println!("pacc version 0.2.2");
         return;
     }
 
     let mut pulse_ctx = PaContext::new();
-    if let Err(e) = pulse_ctx.connect_context() {
-        eprintln!("{e}");
-        return;
-    }
+    check_res!(pulse_ctx.connect_context());
 
     let outputs = Arc::new(Mutex::new(Vec::new()));
-    if let Err(e) = pulse_ctx.get_pa_outputs_list(outputs.clone()) {
-        eprintln!("{e}");
-        return;
-    }
+    check_res!(pulse_ctx.get_pa_outputs_list(outputs.clone()));
 
     let mut state = ListState::default();
     state.select(Some(0));
-    if let Err(e) = ui::show_ui(&mut state, &outputs.lock().unwrap()) {
-        eprintln!("{e}");
-        return;
-    };
+    check_res!(ui::show_ui(&mut state, &outputs.lock().unwrap()));
 
     if let None = state.selected() {
         return;
     }
 
     let selected_out = &outputs.lock().unwrap()[state.selected().unwrap()];
-    if let Err(e) = pulse_ctx.set_pa_sink_and_port(&selected_out) {
-        eprintln!("{e}");
-        return;
-    }
+    check_res!(pulse_ctx.set_pa_sink_and_port(&selected_out));
 
     println!("Output switched to '{}'", selected_out.to_list_line());
 }
