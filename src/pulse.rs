@@ -69,11 +69,14 @@ impl PaContext {
                 match result {
                     ListResult::Item(sink) => {
                         let ports = &sink.ports;
+                        let active_port_name = &sink.active_port.as_deref().unwrap().name;
 
                         for idx in 0..ports.iter().count() {
                             let port = &ports[idx];
 
+                            let active = sink.state.is_running() && port.name.as_deref().eq(&active_port_name.as_deref());
                             let source = PaOutput {
+                                active,
                                 sink_name: sink.name.as_deref().unwrap_or("N/A").to_string(),
                                 sink_description: sink.description.as_deref().unwrap_or("N/A").to_string(),
                                 port_name: port.name.as_deref().unwrap_or("N/A").to_string(),

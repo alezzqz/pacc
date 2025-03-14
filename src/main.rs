@@ -18,7 +18,7 @@ macro_rules! check_res {
 
 fn main() {
     if env::args().find(|x| x == "--version" || x == "-v") != None {
-        println!("pacc version 0.2.2");
+        println!("pacc version 0.2.3");
         return;
     }
 
@@ -28,8 +28,9 @@ fn main() {
     let outputs = Arc::new(Mutex::new(Vec::new()));
     check_res!(pulse_ctx.get_pa_outputs_list(outputs.clone()));
 
+    let active_out_idx = outputs.lock().unwrap().iter().position(|x| x.active );
     let mut state = ListState::default();
-    state.select(Some(0));
+    state.select(active_out_idx);
     check_res!(ui::show_ui(&mut state, &outputs.lock().unwrap()));
 
     if let None = state.selected() {
