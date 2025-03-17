@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub struct PaOutput {
-    pub active: bool,
+    pub is_active_port: bool,
     pub sink_name: String,
     pub sink_description: String,
     pub port_name: String,

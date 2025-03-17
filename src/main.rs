@@ -28,12 +28,17 @@ fn main() {
     let outputs = Arc::new(Mutex::new(Vec::new()));
     check_res!(pulse_ctx.get_pa_outputs_list(outputs.clone()));
 
-    let active_out_idx = outputs.lock().unwrap().iter().position(|x| x.active );
+    let def_sink_name = pulse_ctx.get_default_sink_name().unwrap_or("".to_string());
+
+    let active_out_idx = match outputs.lock().unwrap().iter().position(|x| x.is_active_port && x.sink_name == *def_sink_name ) {
+        Some(idx) => Some(idx),
+        None => Some(0)
+    };
     let mut state = ListState::default();
     state.select(active_out_idx);
     check_res!(ui::show_ui(&mut state, &outputs.lock().unwrap()));
 
-    if let None = state.selected() {
+    if state.selected().is_none() {
         return;
     }
 

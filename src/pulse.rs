@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use libpulse_binding::context::{Context, FlagSet};
@@ -74,9 +76,9 @@ impl PaContext {
                         for idx in 0..ports.iter().count() {
                             let port = &ports[idx];
 
-                            let active = sink.state.is_running() && port.name.as_deref().eq(&active_port_name.as_deref());
+                            let is_active_port = port.name.as_deref().eq(&active_port_name.as_deref());
                             let source = PaOutput {
-                                active,
+                                is_active_port,
                                 sink_name: sink.name.as_deref().unwrap_or("N/A").to_string(),
                                 sink_description: sink.description.as_deref().unwrap_or("N/A").to_string(),
                                 port_name: port.name.as_deref().unwrap_or("N/A").to_string(),
@@ -125,5 +127,26 @@ impl PaContext {
         wait_op(&mut self.mainloop, op)?;
 
         Ok(())
+    }
+
+    pub fn get_default_sink_name(&mut self) -> Result<String, &'static str> {
+        let sn = Rc::new(RefCell::new(None));
+
+        let op = self.context.introspect().get_server_info({
+            let sn_clone = sn.clone();
+            move |info| {
+            if let Some(name) =  info.default_sink_name.clone() {
+                let mut xsn = sn_clone.borrow_mut();
+                *xsn = Some(name.to_string());
+            }
+        }});
+
+        wait_op(&mut self.mainloop, op)?;
+
+        if let Some(sink_name) = sn.take() {
+            Ok(sink_name.to_string())
+        } else {
+            Err("can't get default sink name")
+        }        
     }
 }
