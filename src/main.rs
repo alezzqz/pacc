@@ -30,7 +30,7 @@ fn main() {
 
     let def_sink_name = pulse_ctx.get_default_sink_name().unwrap_or("".to_string());
 
-    let active_out_idx = match outputs.lock().unwrap().iter().position(|x| x.is_active_port && x.sink_name == *def_sink_name ) {
+    let active_out_idx = match outputs.lock().unwrap().iter().position(|x| x.is_active_port && x.sink_name == def_sink_name ) {
         Some(idx) => Some(idx),
         None => Some(0)
     };

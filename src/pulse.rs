@@ -136,17 +136,12 @@ impl PaContext {
             let sn_clone = sn.clone();
             move |info| {
             if let Some(name) =  info.default_sink_name.clone() {
-                let mut xsn = sn_clone.borrow_mut();
-                *xsn = Some(name.to_string());
+                sn_clone.replace(Some(name.to_string()));
             }
         }});
 
         wait_op(&mut self.mainloop, op)?;
 
-        if let Some(sink_name) = sn.take() {
-            Ok(sink_name.to_string())
-        } else {
-            Err("can't get default sink name")
-        }        
+        sn.take().ok_or("can't get default sink name")
     }
 }
